@@ -26,7 +26,6 @@ Powered by AI and community verification, Dhor bridges the gap between public sa
 * **Backend:** Node.js, Express.js
 * **Database:** MongoDB (with Geospatial & Text Indexing)
 * **Mapping:** Leaflet & React-Leaflet (OpenStreetMap)
-* **AI Integration:** OpenAI API (for Chatbot & NLP Data Extraction)
 
 ---
 

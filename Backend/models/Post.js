@@ -24,11 +24,11 @@ const postSchema = new mongoose.Schema(
     },
     district: {
       type: String,
-      required: true,
+      default: '',
     },
     thana: {
       type: String,
-      required: true,
+      default: '',
     },
     postedBy: {
       type: String,

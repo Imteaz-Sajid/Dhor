@@ -37,7 +37,7 @@ exports.getUserProfile = async (req, res) => {
  */
 exports.updateUserProfile = async (req, res) => {
   try {
-    const { name, district, thana } = req.body;
+    const { name, district, thana, profilePicture } = req.body;
 
     const user = await User.findById(req.userId);
 
@@ -52,6 +52,7 @@ exports.updateUserProfile = async (req, res) => {
     if (name !== undefined) user.name = name;
     if (district !== undefined) user.district = district;
     if (thana !== undefined) user.thana = thana;
+    if (profilePicture !== undefined) user.profilePicture = profilePicture;
 
     await user.save();
 

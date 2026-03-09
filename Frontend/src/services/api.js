@@ -84,6 +84,79 @@ export const postAPI = {
   },
 };
 
+// Report API endpoints
+export const reportAPI = {
+  // Upload avatar image
+  uploadAvatar: async (file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await API.post('/reports/upload-avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` },
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Avatar upload failed' };
+    }
+  },
+
+  // Upload image to Cloudinary via backend
+  uploadImage: async (file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await API.post('/reports/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` },
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Image upload failed' };
+    }
+  },
+
+  // AI pre-check for similar nearby crimes
+  checkSimilar: async (description, coordinates) => {
+    try {
+      const response = await API.post('/reports/check-similar', { description, coordinates });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'AI check failed' };
+    }
+  },
+
+  // Submit a new crime report
+  createReport: async (reportData) => {
+    try {
+      const response = await API.post('/reports', reportData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to create report' };
+    }
+  },
+
+  // Fetch all reports (community feed)
+  getAllReports: async () => {
+    try {
+      const response = await API.get('/reports/all');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch reports' };
+    }
+  },
+
+  // Fetch own reports
+  getMyReports: async () => {
+    try {
+      const response = await API.get('/reports');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch reports' };
+    }
+  },
+};
+
 // Notification API endpoints
 export const notificationAPI = {
   getNotifications: async () => {

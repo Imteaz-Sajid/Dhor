@@ -1,7 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { locationData, districts } from '../data/locations';
-import { userAPI } from '../services/api';
+import { userAPI, reportAPI } from '../services/api';
 import Navbar from '../components/Navbar';
+import CreateReport from '../components/CreateReport';
+
+const crimeColors = {
+  Extortion: 'bg-orange-100 text-orange-700',
+  Theft: 'bg-yellow-100 text-yellow-700',
+  Robbery: 'bg-red-200 text-red-800',
+  Harassment: 'bg-pink-100 text-pink-700',
+  Assault: 'bg-red-100 text-red-700',
+  Other: 'bg-gray-100 text-gray-600',
+};
+
+const statusColors = {
+  Pending: 'bg-yellow-50 text-yellow-600 border border-yellow-200',
+  Verified: 'bg-green-50 text-green-600 border border-green-200',
+  Rejected: 'bg-red-50 text-red-600 border border-red-200',
+  Resolved: 'bg-blue-50 text-blue-600 border border-blue-200',
+};
+
+const timeAgo = (date) => {
+  const diff = Math.floor((Date.now() - new Date(date)) / 1000);
+  if (diff < 60) return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+};
 
 const Profile = () => {
   const [user, setUser] = useState(null);
@@ -10,6 +35,12 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [myReports, setMyReports] = useState([]);
+  const [loadingReports, setLoadingReports] = useState(true);
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   // Edit form state
   const [formData, setFormData] = useState({
@@ -40,7 +71,19 @@ const Profile = () => {
     };
 
     fetchProfile();
+    fetchMyReports();
   }, []);
+
+  const fetchMyReports = async () => {
+    try {
+      const data = await reportAPI.getMyReports();
+      setMyReports(data.reports || []);
+    } catch {
+      // non-critical
+    } finally {
+      setLoadingReports(false);
+    }
+  };
 
   // Handle form input changes
   const handleChange = (e) => {
@@ -69,15 +112,28 @@ const Profile = () => {
     setSuccess('');
 
     try {
-      const response = await userAPI.updateProfile(formData);
+      let avatarUrl;
+      if (avatarFile) {
+        setUploadingAvatar(true);
+        const uploadRes = await reportAPI.uploadAvatar(avatarFile);
+        avatarUrl = uploadRes.imageUrl;
+        setUploadingAvatar(false);
+      }
+
+      const payload = { ...formData };
+      if (avatarUrl) payload.profilePicture = avatarUrl;
+
+      const response = await userAPI.updateProfile(payload);
       setUser(response.user);
       setIsEditing(false);
       setSuccess('Profile updated successfully!');
-      // Update localStorage
       localStorage.setItem('user', JSON.stringify(response.user));
+      setAvatarFile(null);
+      setAvatarPreview(null);
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       console.error('Update error:', err);
+      setUploadingAvatar(false);
       setError(err.message || 'Failed to update profile');
     } finally {
       setSaving(false);
@@ -94,6 +150,8 @@ const Profile = () => {
     setThanas(locationData[user.district] || []);
     setIsEditing(false);
     setError('');
+    setAvatarFile(null);
+    setAvatarPreview(null);
   };
 
   // Get initials for avatar
@@ -164,11 +222,15 @@ const Profile = () => {
             <div className="h-28 bg-gradient-to-r from-indigo-500 to-purple-600 relative">
               <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
                 <div className="w-24 h-24 rounded-full bg-white p-1 shadow-lg">
-                  <div className="w-full h-full rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-white">
-                      {getInitials(user?.name)}
-                    </span>
-                  </div>
+                  {user?.profilePicture ? (
+                    <img src={user.profilePicture} alt="avatar" className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                      <span className="text-2xl font-bold text-white">
+                        {getInitials(user?.name)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -215,15 +277,23 @@ const Profile = () => {
                     </span>
                   </div>
 
+                  <div className="flex justify-center gap-3 mt-6">
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="mt-6 inline-flex items-center px-5 py-2 border border-indigo-300 rounded-lg text-sm font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors duration-200"
+                    className="inline-flex items-center px-5 py-2 border border-indigo-300 rounded-lg text-sm font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors duration-200"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                     Edit Profile
                   </button>
+                  <button
+                    onClick={() => setShowReportModal(true)}
+                    className="inline-flex items-center px-5 py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition-colors duration-200"
+                  >
+                    📋 Create Report
+                  </button>
+                  </div>
                 </>
               ) : (
                 /* ─── Edit Mode ─── */
@@ -233,6 +303,42 @@ const Profile = () => {
                       {error}
                     </div>
                   )}
+
+                  {/* Profile Picture Upload */}
+                  <div className="flex flex-col items-center">
+                    <label className="cursor-pointer group relative">
+                      <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-dashed border-gray-300 group-hover:border-indigo-400 transition-colors">
+                        {avatarPreview || user?.profilePicture ? (
+                          <img src={avatarPreview || user?.profilePicture} alt="avatar" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      <div className="absolute bottom-0 right-0 w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center shadow">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setAvatarFile(file);
+                            setAvatarPreview(URL.createObjectURL(file));
+                          }
+                        }}
+                      />
+                    </label>
+                    <p className="text-xs text-gray-400 mt-2">Click to change profile picture</p>
+                  </div>
 
                   {/* Name */}
                   <div>
@@ -304,10 +410,10 @@ const Profile = () => {
                   <div className="flex space-x-3 pt-2">
                     <button
                       type="submit"
-                      disabled={saving}
+                      disabled={saving || uploadingAvatar}
                       className="flex-1 py-2.5 rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {saving ? 'Saving...' : 'Save Changes'}
+                      {uploadingAvatar ? 'Uploading photo...' : saving ? 'Saving...' : 'Save Changes'}
                     </button>
                     <button
                       type="button"
@@ -374,8 +480,103 @@ const Profile = () => {
             </div>
           </div>
 
+          {/* ─── My Reports ─── */}
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-gray-800">
+                  My Reports
+                </h3>
+                <span className="text-xs font-semibold bg-indigo-100 text-indigo-600 px-2.5 py-1 rounded-full">
+                  {myReports.length}
+                </span>
+              </div>
+            </div>
+            {loadingReports ? (
+              <div className="flex justify-center py-12">
+                <div className="w-7 h-7 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : myReports.length === 0 ? (
+              <div className="flex flex-col items-center py-14 px-6">
+                <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <p className="text-gray-400 text-sm font-medium">No reports yet</p>
+                <p className="text-gray-300 text-xs mt-1">Create your first report to see it here</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-50">
+                {myReports.map((report) => (
+                  <div key={report._id} className="group hover:bg-gray-50/50 transition-colors">
+                    {/* Image banner if exists */}
+                    {report.imageUrl && (
+                      <div className="relative w-full" style={{ aspectRatio: '16 / 9' }}>
+                        <img
+                          src={report.imageUrl}
+                          alt="report"
+                          className="w-full h-full object-cover"
+                        />
+                        {/* Gradient overlay with badges */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                        <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm ${crimeColors[report.crimeType] || crimeColors.Other}`}>
+                            {report.crimeType}
+                          </span>
+                          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm ${statusColors[report.status] || statusColors.Pending}`}>
+                            {report.status}
+                          </span>
+                        </div>
+                        <span className="absolute top-3 right-3 text-xs text-white/80 bg-black/30 backdrop-blur-sm px-2 py-1 rounded-lg">
+                          {timeAgo(report.createdAt)}
+                        </span>
+                      </div>
+                    )}
+                    <div className="px-5 py-4">
+                      {/* Badges row for no-image reports */}
+                      {!report.imageUrl && (
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${crimeColors[report.crimeType] || crimeColors.Other}`}>
+                              {report.crimeType}
+                            </span>
+                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusColors[report.status] || statusColors.Pending}`}>
+                              {report.status}
+                            </span>
+                          </div>
+                          <span className="text-xs text-gray-400">{timeAgo(report.createdAt)}</span>
+                        </div>
+                      )}
+                      <h4 className="font-semibold text-gray-800 text-sm leading-snug">{report.title}</h4>
+                      <p className="text-sm text-gray-500 mt-1 line-clamp-2 leading-relaxed">{report.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
+
+      {/* ─── Create Report Modal ─── */}
+      {showReportModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 backdrop-blur-sm overflow-y-auto pt-10 pb-10 px-4"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowReportModal(false); }}
+        >
+          <div className="w-full max-w-xl relative">
+            <button
+              onClick={() => setShowReportModal(false)}
+              className="absolute -top-4 -right-2 z-10 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center text-gray-500 hover:text-gray-800 text-lg font-bold"
+            >
+              ×
+            </button>
+            <CreateReport onSuccess={() => { setShowReportModal(false); fetchMyReports(); }} />
+          </div>
+        </div>
+      )}
     </>
   );
 };
