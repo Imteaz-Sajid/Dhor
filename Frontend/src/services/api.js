@@ -29,7 +29,7 @@ export const authAPI = {
     }
   },
 
-  // Login user (for future implementation)
+  // Login user
   login: async (credentials) => {
     try {
       const response = await API.post('/auth/login', credentials);
