@@ -1,0 +1,262 @@
+import React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIconUrl from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import Navbar from '../components/Navbar';
+import { reportAPI } from '../services/api';
+
+// Fix Leaflet default marker icons
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIconUrl,
+  shadowUrl: markerShadow,
+});
+
+const crimeColors = {
+  Extortion: 'bg-orange-100 text-orange-700',
+  Theft: 'bg-yellow-100 text-yellow-700',
+  Robbery: 'bg-red-200 text-red-800',
+  Harassment: 'bg-pink-100 text-pink-700',
+  Assault: 'bg-red-100 text-red-700',
+  Other: 'bg-gray-100 text-gray-600',
+  theft: 'bg-yellow-100 text-yellow-700',
+  assault: 'bg-red-100 text-red-700',
+  vandalism: 'bg-orange-100 text-orange-700',
+  robbery: 'bg-red-200 text-red-800',
+  fraud: 'bg-purple-100 text-purple-700',
+  harassment: 'bg-pink-100 text-pink-700',
+  other: 'bg-gray-100 text-gray-600',
+};
+
+const statusColors = {
+  Pending: 'bg-yellow-50 text-yellow-600 border border-yellow-200',
+  Verified: 'bg-green-50 text-green-600 border border-green-200',
+  Rejected: 'bg-red-50 text-red-600 border border-red-200',
+  Resolved: 'bg-blue-50 text-blue-600 border border-blue-200',
+};
+
+const timeAgo = (date) => {
+  const diff = Math.floor((Date.now() - new Date(date)) / 1000);
+  if (diff < 60) return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+};
+
+/* ─── Single report card ─── */
+const ReportCard = ({ report }) => {
+  const [mapOpen, setMapOpen] = useState(false);
+  const coords = report.location?.coordinates; // GeoJSON: [lng, lat]
+  const hasLocation = Array.isArray(coords) && coords.length === 2;
+  const lat = hasLocation ? coords[1] : null;
+  const lng = hasLocation ? coords[0] : null;
+  const trustRating =
+    report.userId?.trustScore != null
+      ? (report.userId.trustScore / 20).toFixed(1)
+      : null;
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+
+      {/* ─── Header: avatar · name · rating · time · crime badge ─── */}
+      <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center gap-2.5">
+          {report.userId?.profilePicture ? (
+            <img src={report.userId.profilePicture} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-red-500 to-orange-400 flex items-center justify-center text-white text-sm font-bold flex-shrink-0 select-none">
+              {(report.userId?.name?.[0] || '?').toUpperCase()}
+            </div>
+          )}
+          <div>
+            <p className="text-sm font-semibold text-gray-800 leading-tight">
+              {report.userId?.name || 'Anonymous'}
+            </p>
+            <div className="flex items-center gap-1 text-xs text-gray-400">
+              {trustRating && (
+                <>
+                  <span className="text-yellow-400">★</span>
+                  <span>{trustRating}</span>
+                  <span className="text-gray-200">|</span>
+                </>
+              )}
+              <span>{timeAgo(report.createdAt)}</span>
+            </div>
+          </div>
+        </div>
+        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${crimeColors[report.crimeType] || crimeColors.Other}`}>
+          {report.crimeType}
+        </span>
+      </div>
+
+      {/* ─── Image (square) with mini-map in bottom-right corner ─── */}
+      <div className="relative w-full" style={{ aspectRatio: '1 / 1' }}>
+        {report.imageUrl ? (
+          <img
+            src={report.imageUrl}
+            alt="Evidence"
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-200 gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-14 w-14 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span className="text-xs text-gray-400">No photo attached</span>
+          </div>
+        )}
+
+        {/* Mini map thumbnail — bottom-right corner */}
+        {hasLocation && (
+          <button
+            onClick={() => setMapOpen(true)}
+            className="absolute bottom-3 right-3 w-20 h-20 rounded-xl overflow-hidden shadow-xl border-2 border-white hover:scale-105 transition-transform z-10"
+            title="View location on map"
+          >
+            <MapContainer
+              center={[lat, lng]}
+              zoom={14}
+              zoomControl={false}
+              dragging={false}
+              scrollWheelZoom={false}
+              doubleClickZoom={false}
+              touchZoom={false}
+              keyboard={false}
+              attributionControl={false}
+              style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
+            >
+              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              <Marker position={[lat, lng]} />
+            </MapContainer>
+          </button>
+        )}
+      </div>
+
+      {/* ─── Footer: title · status · description · location ─── */}
+      <div className="px-4 py-3">
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <h4 className="font-semibold text-gray-800 text-sm leading-snug">{report.title}</h4>
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${statusColors[report.status] || statusColors.Pending}`}>
+            {report.status}
+          </span>
+        </div>
+        {(report.district || report.thana) && (
+          <p className="text-xs text-gray-400 flex items-center gap-1 mb-1">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-red-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            {[report.thana, report.district].filter(Boolean).join(', ')}
+          </p>
+        )}
+        <p className="text-sm text-gray-500 line-clamp-2">{report.description}</p>
+      </div>
+
+      {/* ─── Expanded map modal ─── */}
+      {mapOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setMapOpen(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl relative"
+            style={{ height: '440px' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Title pill */}
+            <div className="absolute top-3 left-3 z-10 bg-white/90 backdrop-blur rounded-xl px-3 py-1.5 shadow text-xs font-medium text-gray-700 max-w-[65%] truncate">
+              📍 {report.title}
+            </div>
+            {/* Close button */}
+            <button
+              onClick={() => setMapOpen(false)}
+              className="absolute top-3 right-3 z-10 w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center text-gray-600 hover:text-gray-900 text-lg font-bold"
+            >
+              ×
+            </button>
+            <MapContainer
+              center={[lat, lng]}
+              zoom={15}
+              style={{ width: '100%', height: '100%' }}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              />
+              <Marker position={[lat, lng]} />
+            </MapContainer>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ─── Home page ─── */
+const Home = () => {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const [reports, setReports] = useState([]);
+  const [loadingReports, setLoadingReports] = useState(true);
+  const fetchReports = async () => {
+    try {
+      const data = await reportAPI.getAllReports();
+      setReports(data.reports || []);
+    } catch {
+      // silently ignore
+    } finally {
+      setLoadingReports(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReports();
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+
+      <main className="pt-20 px-4 sm:px-6 lg:px-8 max-w-lg mx-auto pb-10">
+        {/* Welcome card */}
+        <div className="bg-white rounded-2xl shadow-md p-5 mt-4 mb-5">
+          <h2 className="text-xl font-bold text-gray-900">
+            Welcome{user.name ? `, ${user.name}` : ''}!
+          </h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {user.thana && user.district
+              ? `${user.thana}, ${user.district}`
+              : 'Your community safety dashboard'}
+          </p>
+        </div>
+
+        {/* Feed label */}
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Recent Reports</p>
+
+        {loadingReports ? (
+          <div className="flex justify-center py-16">
+            <div className="w-7 h-7 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : reports.length === 0 ? (
+          <div className="bg-white rounded-2xl shadow-sm p-10 text-center text-gray-400">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto mb-3 text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            No reports yet. Be the first to report an incident.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {reports.map((report) => (
+              <ReportCard key={report._id} report={report} />
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+};
+
+export default Home;
