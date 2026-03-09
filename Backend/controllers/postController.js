@@ -28,8 +28,8 @@ exports.createPost = async (req, res) => {
       title,
       description,
       crimeType: crimeType || 'other',
-      district: poster.district,
-      thana: poster.thana,
+      district: poster.district || '',
+      thana: poster.thana || '',
       postedBy: poster.name,
     });
 
