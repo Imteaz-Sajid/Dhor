@@ -1,8 +1,68 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { notificationAPI } from '../services/api';
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const fetchNotifications = async () => {
+    try {
+      const data = await notificationAPI.getNotifications();
+      setNotifications(data.notifications || []);
+      setUnreadCount(data.unreadCount || 0);
+    } catch {
+      // silently ignore if not logged in
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    // Poll every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const handleBellClick = () => {
+    setDropdownOpen((prev) => !prev);
+    if (!dropdownOpen) fetchNotifications();
+  };
+
+  const handleMarkAllRead = async () => {
+    await notificationAPI.markAllAsRead();
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    setUnreadCount(0);
+  };
+
+  const handleMarkOne = async (id) => {
+    await notificationAPI.markAsRead(id);
+    setNotifications((prev) =>
+      prev.map((n) => (n._id === id ? { ...n, isRead: true } : n))
+    );
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+  };
+
+  const timeAgo = (date) => {
+    const diff = Math.floor((Date.now() - new Date(date)) / 1000);
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -54,6 +114,76 @@ const Navbar = () => {
               </svg>
               <span className="mt-0.5">Stats</span>
             </NavLink>
+
+            {/* Notifications Bell */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={handleBellClick}
+                className="flex flex-col items-center text-xs text-gray-500 hover:text-indigo-500 transition-colors duration-200 focus:outline-none"
+              >
+                <div className="relative">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center leading-none">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </div>
+                <span className="mt-0.5">Alerts</span>
+              </button>
+
+              {/* Dropdown */}
+              {dropdownOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
+                  {/* Header */}
+                  <div className="flex items-center justify-between px-4 py-3 bg-indigo-600">
+                    <span className="text-white font-semibold text-sm">Area Alerts</span>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={handleMarkAllRead}
+                        className="text-indigo-200 hover:text-white text-xs underline"
+                      >
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Notification list */}
+                  <div className="max-h-80 overflow-y-auto divide-y divide-gray-100">
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-8 text-center text-gray-400 text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mx-auto mb-2 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                        No alerts yet
+                      </div>
+                    ) : (
+                      notifications.map((n) => (
+                        <div
+                          key={n._id}
+                          onClick={() => !n.isRead && handleMarkOne(n._id)}
+                          className={`px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors ${
+                            !n.isRead ? 'bg-indigo-50' : ''
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className={`mt-0.5 flex-shrink-0 h-2 w-2 rounded-full ${!n.isRead ? 'bg-indigo-500' : 'bg-gray-300'}`} />
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-sm ${!n.isRead ? 'font-semibold text-gray-800' : 'text-gray-600'}`}>
+                                {n.message}
+                              </p>
+                              <p className="text-xs text-gray-400 mt-0.5">{timeAgo(n.createdAt)}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Profile */}
             <NavLink

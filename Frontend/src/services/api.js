@@ -29,7 +29,7 @@ export const authAPI = {
     }
   },
 
-  // Login user (for future implementation)
+  // Login user
   login: async (credentials) => {
     try {
       const response = await API.post('/auth/login', credentials);
@@ -59,6 +59,57 @@ export const userAPI = {
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to update profile' };
+    }
+  },
+};
+
+// Post API endpoints
+export const postAPI = {
+  createPost: async (postData) => {
+    try {
+      const response = await API.post('/posts', postData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to create post' };
+    }
+  },
+
+  getPosts: async () => {
+    try {
+      const response = await API.get('/posts');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch posts' };
+    }
+  },
+};
+
+// Notification API endpoints
+export const notificationAPI = {
+  getNotifications: async () => {
+    try {
+      const response = await API.get('/notifications');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch notifications' };
+    }
+  },
+
+  markAsRead: async (id) => {
+    try {
+      const response = await API.put(`/notifications/${id}/read`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to mark as read' };
+    }
+  },
+
+  markAllAsRead: async () => {
+    try {
+      const response = await API.put('/notifications/read-all');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to mark all as read' };
     }
   },
 };
