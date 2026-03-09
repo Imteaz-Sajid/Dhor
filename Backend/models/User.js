@@ -51,6 +51,14 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    trustScore: {
+      type: Number,
+      default: 0,
+    },
+    badges: {
+      type: [String],
+      default: ['Rookie'],
+    },
   },
   {
     timestamps: true,

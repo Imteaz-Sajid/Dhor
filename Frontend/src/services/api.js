@@ -8,6 +8,15 @@ const API = axios.create({
   },
 });
 
+// Attach JWT token to every request if available
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 // Auth API endpoints
 export const authAPI = {
   // Register a new user
@@ -27,6 +36,29 @@ export const authAPI = {
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Login failed' };
+    }
+  },
+};
+
+// User API endpoints
+export const userAPI = {
+  // Get current user profile
+  getProfile: async () => {
+    try {
+      const response = await API.get('/users/profile');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch profile' };
+    }
+  },
+
+  // Update user profile
+  updateProfile: async (profileData) => {
+    try {
+      const response = await API.put('/users/profile', profileData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to update profile' };
     }
   },
 };
