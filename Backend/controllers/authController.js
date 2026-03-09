@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 /**
@@ -109,10 +110,16 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Return user data (no JWT yet)
+    // Generate JWT token
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: '7d',
+    });
+
+    // Return user data with token
     res.status(200).json({
       success: true,
       message: 'Login successful',
+      token,
       user: {
         id: user._id,
         name: user.name,
@@ -123,6 +130,8 @@ exports.login = async (req, res) => {
         thana: user.thana,
         role: user.role,
         isVerified: user.isVerified,
+        trustScore: user.trustScore,
+        badges: user.badges,
       },
     });
   } catch (error) {

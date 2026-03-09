@@ -23,8 +23,11 @@ const Login = () => {
     try {
       const response = await authAPI.login(formData);
       console.log('Login successful:', response);
-      // Store user data in localStorage
+      // Store user data and token in localStorage
       localStorage.setItem('user', JSON.stringify(response.user));
+      if (response.token) {
+        localStorage.setItem('token', response.token);
+      }
       // Navigate to home page
       navigate('/home');
     } catch (err) {
