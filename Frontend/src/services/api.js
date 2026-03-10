@@ -12,7 +12,7 @@ const API = axios.create({
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
-    config.headers.Authorization = Bearer ${token};
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
@@ -93,7 +93,7 @@ export const reportAPI = {
     try {
       const token = localStorage.getItem('token');
       const response = await API.post('/reports/upload-avatar', formData, {
-        headers: { 'Content-Type': 'multipart/form-data', Authorization: Bearer ${token} },
+        headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` },
       });
       return response.data;
     } catch (error) {
@@ -108,7 +108,7 @@ export const reportAPI = {
     try {
       const token = localStorage.getItem('token');
       const response = await API.post('/reports/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data', Authorization: Bearer ${token} },
+        headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` },
       });
       return response.data;
     } catch (error) {
@@ -170,7 +170,7 @@ export const notificationAPI = {
 
   markAsRead: async (id) => {
     try {
-      const response = await API.put(/notifications/${id}/read);
+      const response = await API.put(`/notifications/${id}/read`);
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to mark as read' };

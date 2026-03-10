@@ -132,6 +132,7 @@ exports.login = async (req, res) => {
         isVerified: user.isVerified,
         trustScore: user.trustScore,
         badges: user.badges,
+        profilePicture: user.profilePicture,
       },
     });
   } catch (error) {

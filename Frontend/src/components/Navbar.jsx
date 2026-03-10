@@ -81,7 +81,7 @@ const Navbar = () => {
             style={{ fontFamily: "'Irish Grover', cursive" }}
             onClick={() => navigate('/home')}
           >
-            Dhor
+            Dhor!
           </div>
 
           {/* Centered Nav Icons */}
