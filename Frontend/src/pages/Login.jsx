@@ -47,7 +47,7 @@ const Login = () => {
             className="text-7xl font-bold text-indigo-700 mb-2"
             style={{ fontFamily: "'Irish Grover', cursive" }}
           >
-            Dhor
+            Dhor!
           </h1>
           <p className="text-sm text-gray-500 italic mb-6">
             "Crime dekhlei... Dhor!"
