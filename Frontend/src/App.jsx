@@ -5,6 +5,9 @@ import Register from './pages/Register'
 import Home from './pages/Home'
 import Profile from './pages/Profile'
 import Statistics from './pages/Statistics'
+import Directory from './pages/Directory'
+import MissingBoard from './pages/MissingBoard'
+import ReportMissing from './pages/ReportMissing'
 
 function App() {
   return (
@@ -15,6 +18,9 @@ function App() {
         <Route path="/home" element={<Home />} />
         <Route path="/stats" element={<Statistics />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/directory"      element={<Directory />} />
+        <Route path="/missing"        element={<MissingBoard />} />
+        <Route path="/report-missing" element={<ReportMissing />} />
       </Routes>
     </Router>
   )
