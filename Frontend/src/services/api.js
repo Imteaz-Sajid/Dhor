@@ -187,27 +187,6 @@ export const notificationAPI = {
   },
 };
 
-// Vote API endpoints
-export const voteAPI = {
-  castVote: async (reportId, voteType) => {
-    try {
-      const response = await API.post(`/votes/${reportId}`, { voteType });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { message: 'Failed to cast vote' };
-    }
-  },
-
-  getStats: async (reportId) => {
-    try {
-      const response = await API.get(`/votes/${reportId}/stats`);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { message: 'Failed to fetch vote stats' };
-    }
-  },
-};
-
 // Stats API endpoints
 export const statsAPI = {
   getOverview: async (params = {}) => {
@@ -219,6 +198,30 @@ export const statsAPI = {
     }
   },
 };
+
+// Vote API endpoints
+export const voteAPI = {
+  // Cast or update a vote on a report ('Confirm' or 'Dispute')
+  castVote: async (reportId, voteType) => {
+    try {
+      const response = await API.post(`/votes/${reportId}`, { voteType });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to cast vote' };
+    }
+  },
+
+  // Get confirm/dispute counts and current user's vote for a report
+  getStats: async (reportId) => {
+    try {
+      const response = await API.get(`/votes/${reportId}/stats`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch vote stats' };
+    }
+  },
+};
+
 // Dashboard API endpoints
 export const dashboardAPI = {
   getMyReports: async () => {
@@ -239,6 +242,87 @@ export const policeAPI = {
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to update report status' };
+    }
+  },
+};
+
+// Comment API endpoints
+export const commentAPI = {
+  getComments: async (reportId) => {
+    try {
+      const response = await API.get(`/comments/${reportId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch comments' };
+    }
+  },
+
+  addComment: async (reportId, text) => {
+    try {
+      const response = await API.post(`/comments/${reportId}`, { text });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to post comment' };
+    }
+  },
+};
+
+// Station (Police Directory) API endpoints
+export const stationAPI = {
+  getAllStations: async () => {
+    try {
+      const response = await API.get('/stations');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch stations' };
+    }
+  },
+
+  addStation: async (data) => {
+    try {
+      const response = await API.post('/stations', data);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to add station' };
+    }
+  },
+
+  updateStation: async (id, data) => {
+    try {
+      const response = await API.put(`/stations/${id}`, data);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to update station' };
+    }
+  },
+};
+
+// Missing Entities API endpoints
+export const missingAPI = {
+  create: async (data) => {
+    try {
+      const response = await API.post('/missing', data);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to create missing report' };
+    }
+  },
+
+  getAll: async (params = {}) => {
+    try {
+      const response = await API.get('/missing', { params });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch missing reports' };
+    }
+  },
+
+  updateStatus: async (id, status) => {
+    try {
+      const response = await API.put(`/missing/${id}/status`, { status });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to update status' };
     }
   },
 };

@@ -57,7 +57,7 @@ router.post('/', protect, async (req, res) => {
         const notifications = areaUsers.map((u) => ({
           userId: u._id,
           postId: report._id,
-          message: `New ${crimeType} report in ${thana}, ${district}: "${title}"`,
+          message: 'New crime reported in your area. Please verify if you have information.',
           isRead: false,
         }));
         await Notification.insertMany(notifications);

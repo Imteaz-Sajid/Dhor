@@ -6,7 +6,9 @@ import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIconUrl from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import Navbar from '../components/Navbar';
-import { reportAPI } from '../services/api';
+import CommentSection from '../components/CommentSection';
+import { reportAPI, voteAPI } from '../services/api';
+import { locationData, districts } from '../data/locations';
 
 // Fix Leaflet default marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -48,8 +50,14 @@ const timeAgo = (date) => {
 };
 
 /* ─── Single report card ─── */
-const ReportCard = ({ report }) => {
+const ReportCard = ({ report, currentUser }) => {
   const [mapOpen, setMapOpen] = useState(false);
+  const [confirmCount, setConfirmCount] = useState(0);
+  const [disputeCount, setDisputeCount] = useState(0);
+  const [userVote, setUserVote] = useState(null); // 'Confirm' | 'Dispute' | null
+  const [voteLoading, setVoteLoading] = useState(true);
+  const [eligible, setEligible] = useState(false);
+
   const coords = report.location?.coordinates; // GeoJSON: [lng, lat]
   const hasLocation = Array.isArray(coords) && coords.length === 2;
   const lat = hasLocation ? coords[1] : null;
@@ -58,6 +66,56 @@ const ReportCard = ({ report }) => {
     report.userId?.trustScore != null
       ? (report.userId.trustScore / 20).toFixed(1)
       : null;
+
+  useEffect(() => {
+    const fetchVoteStats = async () => {
+      try {
+        const data = await voteAPI.getStats(report._id);
+        setConfirmCount(data.stats.confirmCount);
+        setDisputeCount(data.stats.disputeCount);
+        setUserVote(data.stats.userVote);
+        setEligible(data.stats.eligible);
+      } catch {
+        // silently ignore — votes are non-critical
+      } finally {
+        setVoteLoading(false);
+      }
+    };
+    fetchVoteStats();
+  }, [report._id]);
+
+  const handleVote = async (type) => {
+    if (userVote === type) return;
+
+    const prevVote = userVote;
+    const prevConfirm = confirmCount;
+    const prevDispute = disputeCount;
+
+    // Optimistic update
+    let newConfirm = confirmCount;
+    let newDispute = disputeCount;
+    if (prevVote === 'Confirm') newConfirm -= 1;
+    if (prevVote === 'Dispute') newDispute -= 1;
+    if (type === 'Confirm') newConfirm += 1;
+    if (type === 'Dispute') newDispute += 1;
+
+    setConfirmCount(newConfirm);
+    setDisputeCount(newDispute);
+    setUserVote(type);
+
+    try {
+      await voteAPI.castVote(report._id, type);
+    } catch {
+      // Roll back on failure
+      setConfirmCount(prevConfirm);
+      setDisputeCount(prevDispute);
+      setUserVote(prevVote);
+    }
+  };
+
+  const totalVotes = confirmCount + disputeCount;
+  const trustPct   = totalVotes > 0 ? (confirmCount / totalVotes) * 100 : 0;
+  const disputePct = totalVotes > 0 ? (disputeCount / totalVotes) * 100 : 0;
 
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
@@ -154,7 +212,66 @@ const ReportCard = ({ report }) => {
           </p>
         )}
         <p className="text-sm text-gray-500 line-clamp-2">{report.description}</p>
+
+        {/* ─── Trust Bar ─── */}
+        <div className="mt-3 space-y-1.5">
+          <div className="flex justify-between items-center text-xs">
+            <span className="font-medium text-green-600">✓ Confirm {confirmCount}</span>
+            <span className="text-gray-400">{totalVotes} vote{totalVotes !== 1 ? 's' : ''}</span>
+            <span className="font-medium text-red-500">Dispute {disputeCount} ✗</span>
+          </div>
+          <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden flex">
+            <div
+              className="h-full bg-green-500 transition-all duration-500 ease-out"
+              style={{ width: `${trustPct}%` }}
+            />
+            <div
+              className="h-full bg-red-400 transition-all duration-500 ease-out"
+              style={{ width: `${disputePct}%` }}
+            />
+          </div>
+          {totalVotes === 0 && (
+            <p className="text-xs text-center text-gray-400">No votes yet — be the first to verify</p>
+          )}
+        </div>
+
+        {/* ─── Vote Buttons ─── */}
+        {eligible ? (
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={() => handleVote('Confirm')}
+              disabled={voteLoading}
+              className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 border-2
+                ${userVote === 'Confirm'
+                  ? 'bg-green-500 border-green-500 text-white shadow scale-[1.02]'
+                  : 'border-green-400 text-green-600 bg-white hover:bg-green-50'}
+                disabled:opacity-40 disabled:cursor-not-allowed`}
+            >
+              ✅ Confirm
+            </button>
+            <button
+              onClick={() => handleVote('Dispute')}
+              disabled={voteLoading}
+              className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 border-2
+                ${userVote === 'Dispute'
+                  ? 'bg-red-500 border-red-500 text-white shadow scale-[1.02]'
+                  : 'border-red-400 text-red-500 bg-white hover:bg-red-50'}
+                disabled:opacity-40 disabled:cursor-not-allowed`}
+            >
+              ❌ Refute
+            </button>
+          </div>
+        ) : (
+          !voteLoading && (
+            <p className="mt-3 text-xs text-center text-gray-400 bg-gray-50 rounded-xl py-2 px-3">
+              Only residents of {report.thana}, {report.district} can vote on this report
+            </p>
+          )
+        )}
       </div>
+
+      {/* ─── Comments ─── */}
+      <CommentSection report={report} currentUser={currentUser} />
 
       {/* ─── Expanded map modal ─── */}
       {mapOpen && (
@@ -196,11 +313,21 @@ const ReportCard = ({ report }) => {
   );
 };
 
+const crimeTypes = ['Extortion', 'Theft', 'Robbery', 'Harassment', 'Assault', 'Other'];
+
 /* ─── Home page ─── */
 const Home = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [reports, setReports] = useState([]);
   const [loadingReports, setLoadingReports] = useState(true);
+
+  // Filter state
+  const [filterCrimeType, setFilterCrimeType] = useState('');
+  const [filterDistrict, setFilterDistrict] = useState('');
+  const [filterThana, setFilterThana] = useState('');
+
+  const thanas = filterDistrict ? locationData[filterDistrict] || [] : [];
+
   const fetchReports = async () => {
     try {
       const data = await reportAPI.getAllReports();
@@ -215,6 +342,20 @@ const Home = () => {
   useEffect(() => {
     fetchReports();
   }, []);
+
+  // Reset thana when district changes
+  useEffect(() => {
+    setFilterThana('');
+  }, [filterDistrict]);
+
+  const filteredReports = reports.filter((r) => {
+    if (filterCrimeType && r.crimeType !== filterCrimeType) return false;
+    if (filterDistrict && r.district !== filterDistrict) return false;
+    if (filterThana && r.thana !== filterThana) return false;
+    return true;
+  });
+
+  const hasActiveFilter = filterCrimeType || filterDistrict || filterThana;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -233,24 +374,76 @@ const Home = () => {
           </p>
         </div>
 
+        {/* Filter bar */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-5">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Filter Reports</p>
+            {hasActiveFilter && (
+              <button
+                onClick={() => { setFilterCrimeType(''); setFilterDistrict(''); setFilterThana(''); }}
+                className="text-xs text-red-500 hover:text-red-600 font-medium"
+              >
+                Clear all
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <select
+              value={filterCrimeType}
+              onChange={(e) => setFilterCrimeType(e.target.value)}
+              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent"
+            >
+              <option value="">All Crime Types</option>
+              {crimeTypes.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+
+            <select
+              value={filterDistrict}
+              onChange={(e) => setFilterDistrict(e.target.value)}
+              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent"
+            >
+              <option value="">All Districts</option>
+              {districts.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+
+            <select
+              value={filterThana}
+              onChange={(e) => setFilterThana(e.target.value)}
+              disabled={!filterDistrict}
+              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value="">All Thanas</option>
+              {thanas.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         {/* Feed label */}
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Recent Reports</p>
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+          {hasActiveFilter ? `${filteredReports.length} result${filteredReports.length !== 1 ? 's' : ''}` : 'Recent Reports'}
+        </p>
 
         {loadingReports ? (
           <div className="flex justify-center py-16">
             <div className="w-7 h-7 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
           </div>
-        ) : reports.length === 0 ? (
+        ) : filteredReports.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-sm p-10 text-center text-gray-400">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto mb-3 text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            No reports yet. Be the first to report an incident.
+            {hasActiveFilter ? 'No reports match your filters.' : 'No reports yet. Be the first to report an incident.'}
           </div>
         ) : (
           <div className="space-y-4">
-            {reports.map((report) => (
-              <ReportCard key={report._id} report={report} />
+            {filteredReports.map((report) => (
+              <ReportCard key={report._id} report={report} currentUser={user} />
             ))}
           </div>
         )}

@@ -14,6 +14,9 @@ const statRoutes = require('./routes/statRoutes');
 const voteRoutes = require('./routes/voteRoutes');
 const userDashboardRoutes = require('./routes/userDashboardRoutes');
 const policeRoutes = require('./routes/policeRoutes');
+const commentRoutes = require('./routes/commentRoutes');
+const stationRoutes = require('./routes/stationRoutes');
+const missingRoutes = require('./routes/missingRoutes');
 
 // Initialize Express app
 const app = express();
@@ -37,6 +40,9 @@ app.use('/api/stats', statRoutes);
 app.use('/api/votes', voteRoutes);
 app.use('/api/user', userDashboardRoutes);
 app.use('/api/police', policeRoutes);
+app.use('/api/comments', commentRoutes);
+app.use('/api/stations', stationRoutes);
+app.use('/api/missing', missingRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {
