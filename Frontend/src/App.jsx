@@ -4,6 +4,8 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Home from './pages/Home'
 import Profile from './pages/Profile'
+import Statistics from './pages/Statistics'
+import UserDashboard from './pages/UserDashboard'
 
 function App() {
   return (
@@ -12,8 +14,9 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/home" element={<Home />} />
-        <Route path="/stats" element={<Home />} />
+        <Route path="/stats" element={<Statistics />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/dashboard" element={<UserDashboard />} />
       </Routes>
     </Router>
   )

@@ -187,4 +187,60 @@ export const notificationAPI = {
   },
 };
 
+// Vote API endpoints
+export const voteAPI = {
+  castVote: async (reportId, voteType) => {
+    try {
+      const response = await API.post(`/votes/${reportId}`, { voteType });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to cast vote' };
+    }
+  },
+
+  getStats: async (reportId) => {
+    try {
+      const response = await API.get(`/votes/${reportId}/stats`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch vote stats' };
+    }
+  },
+};
+
+// Stats API endpoints
+export const statsAPI = {
+  getOverview: async (params = {}) => {
+    try {
+      const response = await API.get('/stats/overview', { params });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch statistics' };
+    }
+  },
+};
+// Dashboard API endpoints
+export const dashboardAPI = {
+  getMyReports: async () => {
+    try {
+      const response = await API.get('/user/my-reports');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch dashboard data' };
+    }
+  },
+};
+
+// Police API endpoints
+export const policeAPI = {
+  updateStatus: async (reportId, statusData) => {
+    try {
+      const response = await API.patch(`/police/update-status/${reportId}`, statusData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to update report status' };
+    }
+  },
+};
+
 export default API;

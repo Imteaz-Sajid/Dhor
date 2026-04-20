@@ -1,10 +1,11 @@
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
 /**
  * Authentication middleware
  * Verifies the JWT token from the Authorization header
  */
-const protect = (req, res, next) => {
+const protect = async (req, res, next) => {
   let token;
 
   if (
@@ -24,6 +25,13 @@ const protect = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.userId = decoded.id;
+
+    // Fetch user role for authorization checks
+    const user = await User.findById(decoded.id).select('role name');
+    if (user) {
+      req.user = { id: decoded.id, role: user.role, name: user.name };
+    }
+
     next();
   } catch (error) {
     return res.status(401).json({
@@ -34,3 +42,4 @@ const protect = (req, res, next) => {
 };
 
 module.exports = protect;
+
