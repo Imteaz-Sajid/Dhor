@@ -12,6 +12,8 @@ const reportRoutes = require('./routes/reportRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const statRoutes = require('./routes/statRoutes');
 const voteRoutes = require('./routes/voteRoutes');
+const userDashboardRoutes = require('./routes/userDashboardRoutes');
+const policeRoutes = require('./routes/policeRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 const stationRoutes = require('./routes/stationRoutes');
 const missingRoutes = require('./routes/missingRoutes');
@@ -35,10 +37,12 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/reports', uploadRoutes);
 app.use('/api/stats', statRoutes);
-app.use('/api/votes',    voteRoutes);
+app.use('/api/votes', voteRoutes);
+app.use('/api/user', userDashboardRoutes);
+app.use('/api/police', policeRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/stations', stationRoutes);
-app.use('/api/missing',  missingRoutes);
+app.use('/api/missing', missingRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {

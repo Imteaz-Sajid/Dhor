@@ -200,7 +200,8 @@ export const statsAPI = {
 };
 
 // Vote API endpoints
-export const voteAPI = {  // Cast or update a vote on a report ('Confirm' or 'Dispute')
+export const voteAPI = {
+  // Cast or update a vote on a report ('Confirm' or 'Dispute')
   castVote: async (reportId, voteType) => {
     try {
       const response = await API.post(`/votes/${reportId}`, { voteType });
@@ -217,6 +218,30 @@ export const voteAPI = {  // Cast or update a vote on a report ('Confirm' or 'Di
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch vote stats' };
+    }
+  },
+};
+
+// Dashboard API endpoints
+export const dashboardAPI = {
+  getMyReports: async () => {
+    try {
+      const response = await API.get('/user/my-reports');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch dashboard data' };
+    }
+  },
+};
+
+// Police API endpoints
+export const policeAPI = {
+  updateStatus: async (reportId, statusData) => {
+    try {
+      const response = await API.patch(`/police/update-status/${reportId}`, statusData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to update report status' };
     }
   },
 };

@@ -12,7 +12,7 @@ router.post('/check-similar', checkSimilar);
 
 // POST /api/reports  – persist a new crime report (protected)
 router.post('/', protect, async (req, res) => {
-  const { title, description, crimeType, imageUrl, coordinates, district, thana } = req.body;
+  const { title, description, crimeType, imageUrl, coordinates, district, thana, isAnonymous } = req.body;
 
   if (
     !title ||
@@ -38,6 +38,7 @@ router.post('/', protect, async (req, res) => {
       imageUrl: imageUrl || null,
       district: district || '',
       thana: thana || '',
+      isAnonymous: isAnonymous || false,
       location: {
         type: 'Point',
         coordinates: [lng, lat],

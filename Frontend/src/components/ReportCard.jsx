@@ -66,9 +66,10 @@ const ReportCard = ({ report }) => {
   const trustPct = totalVotes > 0 ? (confirmCount / totalVotes) * 100 : 0;
   const disputePct = totalVotes > 0 ? (disputeCount / totalVotes) * 100 : 0;
 
-  const avatarUrl =
-    report.userId?.profilePicture ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(report.userId?.name || 'U')}&background=random`;
+  const avatarUrl = report.isAnonymous
+    ? `https://ui-avatars.com/api/?name=Anonymous&background=808080`
+    : report.userId?.profilePicture ||
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(report.userId?.name || 'U')}&background=random`;
 
   return (
     <div className="bg-white rounded-xl shadow-md border border-gray-100 p-5 space-y-4">
@@ -77,12 +78,12 @@ const ReportCard = ({ report }) => {
         <div className="flex items-center gap-3 min-w-0">
           <img
             src={avatarUrl}
-            alt={report.userId?.name}
+            alt={report.isAnonymous ? 'Anonymous' : report.userId?.name}
             className="w-10 h-10 rounded-full object-cover flex-shrink-0"
           />
           <div className="min-w-0">
             <p className="font-semibold text-gray-900 text-sm truncate">
-              {report.userId?.name || 'Anonymous'}
+              {report.isAnonymous ? '🔒 Anonymous' : (report.userId?.name || 'Anonymous')}
             </p>
             <p className="text-xs text-gray-400 truncate">
               {report.thana && report.district

@@ -4,6 +4,7 @@ import {
   XAxis, YAxis, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 import Navbar from '../components/Navbar';
+import ChoroplethMap from '../components/ChoroplethMap';
 import { statsAPI } from '../services/api';
 import { locationData, districts } from '../data/locations';
 
@@ -21,6 +22,7 @@ const Statistics = () => {
   const [crimeTypes, setCrimeTypes] = useState([]);
   const [hotspots, setHotspots] = useState([]);
   const [trend, setTrend] = useState([]);
+  const [districtCounts, setDistrictCounts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,6 +36,7 @@ const Statistics = () => {
         setCrimeTypes(res.data.crimeTypes);
         setHotspots(res.data.hotspots);
         setTrend(res.data.trend);
+        setDistrictCounts(res.data.districtCounts || []);
       } catch (err) {
         console.error('Failed to fetch stats:', err);
       } finally {
@@ -80,93 +83,102 @@ const Statistics = () => {
 
         {loading ? (
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-600"></div>
-          </div>
-        ) : totalCrimes === 0 ? (
-          <div className="text-center py-20 text-gray-400">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto mb-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6m6-10V5a2 2 0 012-2h2a2 2 0 012 2v4m6 10V11a2 2 0 00-2-2h-2a2 2 0 00-2 2v8" /></svg>
-            <p className="text-lg font-medium">No reports found for the selected filters.</p>
+            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-600" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Card 1: Crime Types Pie Chart */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-1">Crime Type Distribution</h2>
-              <p className="text-sm text-gray-400 mb-4">{totalCrimes} total reports</p>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={crimeTypes}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={110}
-                    innerRadius={55}
-                    paddingAngle={3}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {crimeTypes.map((_, i) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                  />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+          <div className="space-y-6">
+            {/* Choropleth Map — always visible */}
+            <ChoroplethMap districtCounts={districtCounts} />
 
-            {/* Card 2: Top 5 High-Risk Thanas Bar Chart */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-1">Top 5 High-Risk Thanas</h2>
-              <p className="text-sm text-gray-400 mb-4">Most reported areas</p>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={hotspots} layout="vertical" margin={{ left: 10 }}>
-                  <XAxis type="number" allowDecimals={false} tick={{ fill: '#6B7280', fontSize: 12 }} />
-                  <YAxis
-                    dataKey="thana"
-                    type="category"
-                    width={120}
-                    tick={{ fill: '#374151', fontSize: 12 }}
-                  />
-                  <Tooltip
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                  />
-                  <Bar dataKey="count" name="Reports" radius={[0, 6, 6, 0]}>
-                    {hotspots.map((_, i) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {totalCrimes === 0 ? (
+              <div className="text-center py-20 text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto mb-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6m6-10V5a2 2 0 012-2h2a2 2 0 012 2v4m6 10V11a2 2 0 00-2-2h-2a2 2 0 00-2 2v8" />
+                </svg>
+                <p className="text-lg font-medium">No chart data for the selected filters.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Card 1: Crime Types Pie Chart */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                  <h2 className="text-lg font-semibold text-gray-800 mb-1">Crime Type Distribution</h2>
+                  <p className="text-sm text-gray-400 mb-4">{totalCrimes} total reports</p>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={crimeTypes}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={110}
+                        innerRadius={55}
+                        paddingAngle={3}
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {crimeTypes.map((_, i) => (
+                          <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                      />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
 
-            {/* Card 3: Crime Trend Line Chart (full width) */}
-            <div className="md:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-1">Crime Trend Over Time</h2>
-              <p className="text-sm text-gray-400 mb-4">Monthly report volume</p>
-              <ResponsiveContainer width="100%" height={320}>
-                <LineChart data={trend} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                  <XAxis dataKey="month" tick={{ fill: '#6B7280', fontSize: 12 }} />
-                  <YAxis allowDecimals={false} tick={{ fill: '#6B7280', fontSize: 12 }} />
-                  <Tooltip
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                  />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="count"
-                    name="Reports"
-                    stroke="#DC2626"
-                    strokeWidth={2.5}
-                    dot={{ r: 4, fill: '#DC2626' }}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+                {/* Card 2: Top 5 High-Risk Thanas Bar Chart */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                  <h2 className="text-lg font-semibold text-gray-800 mb-1">Top 5 High-Risk Thanas</h2>
+                  <p className="text-sm text-gray-400 mb-4">Most reported areas</p>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={hotspots} layout="vertical" margin={{ left: 10 }}>
+                      <XAxis type="number" allowDecimals={false} tick={{ fill: '#6B7280', fontSize: 12 }} />
+                      <YAxis
+                        dataKey="thana"
+                        type="category"
+                        width={120}
+                        tick={{ fill: '#374151', fontSize: 12 }}
+                      />
+                      <Tooltip
+                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                      />
+                      <Bar dataKey="count" name="Reports" radius={[0, 6, 6, 0]}>
+                        {hotspots.map((_, i) => (
+                          <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Card 3: Crime Trend Line Chart (full width) */}
+                <div className="md:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                  <h2 className="text-lg font-semibold text-gray-800 mb-1">Crime Trend Over Time</h2>
+                  <p className="text-sm text-gray-400 mb-4">Monthly report volume</p>
+                  <ResponsiveContainer width="100%" height={320}>
+                    <LineChart data={trend} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                      <XAxis dataKey="month" tick={{ fill: '#6B7280', fontSize: 12 }} />
+                      <YAxis allowDecimals={false} tick={{ fill: '#6B7280', fontSize: 12 }} />
+                      <Tooltip
+                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                      />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="count"
+                        name="Reports"
+                        stroke="#DC2626"
+                        strokeWidth={2.5}
+                        dot={{ r: 4, fill: '#DC2626' }}
+                        activeDot={{ r: 6 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
