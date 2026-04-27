@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { locationData, districts } from '../data/locations';
-import { userAPI, reportAPI } from '../services/api';
+import { userAPI, reportAPI, notificationAPI } from '../services/api';
 import Navbar from '../components/Navbar';
 import CreateReport from '../components/CreateReport';
 
@@ -41,6 +41,9 @@ const Profile = () => {
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotifs, setLoadingNotifs] = useState(true);
+  const [markingAll, setMarkingAll] = useState(false);
 
   // Edit form state
   const [formData, setFormData] = useState({
@@ -72,6 +75,7 @@ const Profile = () => {
 
     fetchProfile();
     fetchMyReports();
+    fetchNotifications();
   }, []);
 
   const fetchMyReports = async () => {
@@ -82,6 +86,40 @@ const Profile = () => {
       // non-critical
     } finally {
       setLoadingReports(false);
+    }
+  };
+
+  const fetchNotifications = async () => {
+    try {
+      const data = await notificationAPI.getNotifications();
+      setNotifications(data.notifications || []);
+    } catch {
+      // non-critical
+    } finally {
+      setLoadingNotifs(false);
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    setMarkingAll(true);
+    try {
+      await notificationAPI.markAllAsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    } catch {
+      // silent
+    } finally {
+      setMarkingAll(false);
+    }
+  };
+
+  const handleMarkOneRead = async (id) => {
+    try {
+      await notificationAPI.markAsRead(id);
+      setNotifications((prev) =>
+        prev.map((n) => (n._id === id ? { ...n, isRead: true } : n))
+      );
+    } catch {
+      // silent
     }
   };
 
@@ -478,6 +516,81 @@ const Profile = () => {
                 ))}
               </div>
             </div>
+          </div>
+
+          {/* ─── Notifications ─── */}
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                Notifications
+                {notifications.filter((n) => !n.isRead).length > 0 && (
+                  <span className="ml-1 px-2 py-0.5 text-xs font-bold bg-red-500 text-white rounded-full">
+                    {notifications.filter((n) => !n.isRead).length}
+                  </span>
+                )}
+              </h3>
+              {notifications.some((n) => !n.isRead) && (
+                <button
+                  onClick={handleMarkAllRead}
+                  disabled={markingAll}
+                  className="text-xs text-indigo-600 hover:text-indigo-800 font-medium disabled:opacity-50"
+                >
+                  {markingAll ? 'Marking...' : 'Mark all read'}
+                </button>
+              )}
+            </div>
+
+            {loadingNotifs ? (
+              <div className="flex justify-center py-10">
+                <div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="flex flex-col items-center py-12 px-6">
+                <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mb-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                </div>
+                <p className="text-gray-400 text-sm font-medium">No notifications yet</p>
+              </div>
+            ) : (
+              <ul className="divide-y divide-gray-50">
+                {notifications.map((notif) => (
+                  <li
+                    key={notif._id}
+                    className={`flex items-start gap-3 px-5 py-4 transition-colors ${
+                      notif.isRead ? 'bg-white' : 'bg-indigo-50/50'
+                    }`}
+                  >
+                    {/* Dot */}
+                    <span className={`mt-1.5 flex-shrink-0 w-2 h-2 rounded-full ${
+                      notif.isRead ? 'bg-gray-200' : 'bg-indigo-500'
+                    }`} />
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm leading-snug ${
+                        notif.isRead ? 'text-gray-500' : 'text-gray-800 font-medium'
+                      }`}>
+                        {notif.message}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {new Date(notif.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    {!notif.isRead && (
+                      <button
+                        onClick={() => handleMarkOneRead(notif._id)}
+                        className="flex-shrink-0 text-xs text-indigo-500 hover:text-indigo-700 font-medium mt-0.5"
+                      >
+                        Read
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           {/* ─── My Reports ─── */}

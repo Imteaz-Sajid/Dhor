@@ -57,6 +57,7 @@ const CreateReport = ({ onSuccess }) => {
   const [selectedDistrict, setSelectedDistrict] = useState('');
   const [selectedThana, setSelectedThana] = useState('');
   const [selectedCrimeType, setSelectedCrimeType] = useState('');
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [pin, setPin] = useState(null);
@@ -173,6 +174,7 @@ const CreateReport = ({ onSuccess }) => {
         coordinates: [pin.lng, pin.lat],
         district: selectedDistrict,
         thana: selectedThana,
+        isAnonymous,
       });
 
       setSubmitted(true);
@@ -180,6 +182,7 @@ const CreateReport = ({ onSuccess }) => {
       setSelectedDistrict('');
       setSelectedThana('');
       setSelectedCrimeType('');
+      setIsAnonymous(false);
       setImageFile(null);
       setImagePreview(null);
       setPin(null);
@@ -343,6 +346,21 @@ const CreateReport = ({ onSuccess }) => {
             <option value="Assault">Assault</option>
             <option value="Other">Other</option>
           </select>
+        </div>
+
+        {/* ── Anonymous Post Checkbox ── */}
+        <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 px-4 py-3 rounded-lg">
+          <input
+            type="checkbox"
+            id="cr-anonymous"
+            checked={isAnonymous}
+            onChange={(e) => setIsAnonymous(e.target.checked)}
+            className="w-4 h-4 text-indigo-600 border-gray-300 rounded cursor-pointer"
+          />
+          <label htmlFor="cr-anonymous" className="flex-1 cursor-pointer">
+            <span className="text-sm font-medium text-gray-900">Create post Anonymously</span>
+            <p className="text-xs text-gray-600 mt-0.5">Your name and photo won't be visible, but your rating will still be shown</p>
+          </label>
         </div>
 
         {/* ── Nearby Warning Banner ── */}

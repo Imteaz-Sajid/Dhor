@@ -2,7 +2,7 @@ const express = require('express');
 const Report = require('../models/Report');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
-const protect = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 const { checkSimilar } = require('../controllers/aiController');
 
 const router = express.Router();
@@ -12,7 +12,7 @@ router.post('/check-similar', checkSimilar);
 
 // POST /api/reports  – persist a new crime report (protected)
 router.post('/', protect, async (req, res) => {
-  const { title, description, crimeType, imageUrl, coordinates, district, thana } = req.body;
+  const { title, description, crimeType, imageUrl, coordinates, district, thana, isAnonymous } = req.body;
 
   if (
     !title ||
@@ -38,6 +38,7 @@ router.post('/', protect, async (req, res) => {
       imageUrl: imageUrl || null,
       district: district || '',
       thana: thana || '',
+      isAnonymous: isAnonymous || false,
       location: {
         type: 'Point',
         coordinates: [lng, lat],
@@ -56,7 +57,7 @@ router.post('/', protect, async (req, res) => {
         const notifications = areaUsers.map((u) => ({
           userId: u._id,
           postId: report._id,
-          message: `New ${crimeType} report in ${thana}, ${district}: "${title}"`,
+          message: 'New crime reported in your area. Please verify if you have information.',
           isRead: false,
         }));
         await Notification.insertMany(notifications);
@@ -81,6 +82,7 @@ router.get('/all', protect, async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(50)
       .populate('userId', 'name trustScore profilePicture')
+      .populate('assignedOfficer', 'name')
       .lean();
     return res.status(200).json({ success: true, reports });
   } catch (error) {

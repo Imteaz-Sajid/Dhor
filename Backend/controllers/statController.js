@@ -22,8 +22,8 @@ exports.getOverview = async (req, res) => {
       }
     }
 
-    // Run all three aggregations in parallel
-    const [crimeTypes, hotspots, trend] = await Promise.all([
+    // Run all four aggregations in parallel
+    const [crimeTypes, hotspots, trend, districtCounts] = await Promise.all([
       // Query 1: Crime Types distribution
       Report.aggregate([
         { $match: match },
@@ -53,6 +53,13 @@ exports.getOverview = async (req, res) => {
         },
         { $sort: { '_id.year': 1, '_id.month': 1 } },
       ]),
+
+      // Query 4: Per-district crime counts (for choropleth map)
+      Report.aggregate([
+        { $match: match },
+        { $group: { _id: '$district', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
     ]);
 
     // Format results
@@ -72,6 +79,10 @@ exports.getOverview = async (req, res) => {
         trend: trend.map((t) => ({
           month: `${monthNames[t._id.month - 1]} ${t._id.year}`,
           count: t.count,
+        })),
+        districtCounts: districtCounts.map((d) => ({
+          district: d._id || 'Unknown',
+          count: d.count,
         })),
       },
     });

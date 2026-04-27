@@ -5,8 +5,9 @@ import 'leaflet/dist/leaflet.css';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIconUrl from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-import Navbar from '../components/Navbar';
-import { reportAPI } from '../services/api';
+import RoleBasedNavbar from '../components/RoleBasedNavbar';
+import CommentSection from '../components/CommentSection';
+import { reportAPI, voteAPI } from '../services/api';
 import { locationData, districts } from '../data/locations';
 
 // Fix Leaflet default marker icons
@@ -49,8 +50,14 @@ const timeAgo = (date) => {
 };
 
 /* ─── Single report card ─── */
-const ReportCard = ({ report }) => {
+const ReportCard = ({ report, currentUser }) => {
   const [mapOpen, setMapOpen] = useState(false);
+  const [confirmCount, setConfirmCount] = useState(0);
+  const [disputeCount, setDisputeCount] = useState(0);
+  const [userVote, setUserVote] = useState(null); // 'Confirm' | 'Dispute' | null
+  const [voteLoading, setVoteLoading] = useState(true);
+  const [eligible, setEligible] = useState(false);
+
   const coords = report.location?.coordinates; // GeoJSON: [lng, lat]
   const hasLocation = Array.isArray(coords) && coords.length === 2;
   const lat = hasLocation ? coords[1] : null;
@@ -59,6 +66,56 @@ const ReportCard = ({ report }) => {
     report.userId?.trustScore != null
       ? (report.userId.trustScore / 20).toFixed(1)
       : null;
+
+  useEffect(() => {
+    const fetchVoteStats = async () => {
+      try {
+        const data = await voteAPI.getStats(report._id);
+        setConfirmCount(data.stats.confirmCount);
+        setDisputeCount(data.stats.disputeCount);
+        setUserVote(data.stats.userVote);
+        setEligible(data.stats.eligible);
+      } catch {
+        // silently ignore — votes are non-critical
+      } finally {
+        setVoteLoading(false);
+      }
+    };
+    fetchVoteStats();
+  }, [report._id]);
+
+  const handleVote = async (type) => {
+    if (userVote === type) return;
+
+    const prevVote = userVote;
+    const prevConfirm = confirmCount;
+    const prevDispute = disputeCount;
+
+    // Optimistic update
+    let newConfirm = confirmCount;
+    let newDispute = disputeCount;
+    if (prevVote === 'Confirm') newConfirm -= 1;
+    if (prevVote === 'Dispute') newDispute -= 1;
+    if (type === 'Confirm') newConfirm += 1;
+    if (type === 'Dispute') newDispute += 1;
+
+    setConfirmCount(newConfirm);
+    setDisputeCount(newDispute);
+    setUserVote(type);
+
+    try {
+      await voteAPI.castVote(report._id, type);
+    } catch {
+      // Roll back on failure
+      setConfirmCount(prevConfirm);
+      setDisputeCount(prevDispute);
+      setUserVote(prevVote);
+    }
+  };
+
+  const totalVotes = confirmCount + disputeCount;
+  const trustPct   = totalVotes > 0 ? (confirmCount / totalVotes) * 100 : 0;
+  const disputePct = totalVotes > 0 ? (disputeCount / totalVotes) * 100 : 0;
 
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
@@ -155,7 +212,66 @@ const ReportCard = ({ report }) => {
           </p>
         )}
         <p className="text-sm text-gray-500 line-clamp-2">{report.description}</p>
+
+        {/* ─── Trust Bar ─── */}
+        <div className="mt-3 space-y-1.5">
+          <div className="flex justify-between items-center text-xs">
+            <span className="font-medium text-green-600">✓ Confirm {confirmCount}</span>
+            <span className="text-gray-400">{totalVotes} vote{totalVotes !== 1 ? 's' : ''}</span>
+            <span className="font-medium text-red-500">Dispute {disputeCount} ✗</span>
+          </div>
+          <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden flex">
+            <div
+              className="h-full bg-green-500 transition-all duration-500 ease-out"
+              style={{ width: `${trustPct}%` }}
+            />
+            <div
+              className="h-full bg-red-400 transition-all duration-500 ease-out"
+              style={{ width: `${disputePct}%` }}
+            />
+          </div>
+          {totalVotes === 0 && (
+            <p className="text-xs text-center text-gray-400">No votes yet — be the first to verify</p>
+          )}
+        </div>
+
+        {/* ─── Vote Buttons ─── */}
+        {eligible ? (
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={() => handleVote('Confirm')}
+              disabled={voteLoading}
+              className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 border-2
+                ${userVote === 'Confirm'
+                  ? 'bg-green-500 border-green-500 text-white shadow scale-[1.02]'
+                  : 'border-green-400 text-green-600 bg-white hover:bg-green-50'}
+                disabled:opacity-40 disabled:cursor-not-allowed`}
+            >
+              ✅ Confirm
+            </button>
+            <button
+              onClick={() => handleVote('Dispute')}
+              disabled={voteLoading}
+              className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 border-2
+                ${userVote === 'Dispute'
+                  ? 'bg-red-500 border-red-500 text-white shadow scale-[1.02]'
+                  : 'border-red-400 text-red-500 bg-white hover:bg-red-50'}
+                disabled:opacity-40 disabled:cursor-not-allowed`}
+            >
+              ❌ Refute
+            </button>
+          </div>
+        ) : (
+          !voteLoading && (
+            <p className="mt-3 text-xs text-center text-gray-400 bg-gray-50 rounded-xl py-2 px-3">
+              Only residents of {report.thana}, {report.district} can vote on this report
+            </p>
+          )
+        )}
       </div>
+
+      {/* ─── Comments ─── */}
+      <CommentSection report={report} currentUser={currentUser} />
 
       {/* ─── Expanded map modal ─── */}
       {mapOpen && (
@@ -243,7 +359,7 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
+      <RoleBasedNavbar />
 
       <main className="pt-20 px-4 sm:px-6 lg:px-8 max-w-lg mx-auto pb-10">
         {/* Welcome card */}
@@ -327,7 +443,7 @@ const Home = () => {
         ) : (
           <div className="space-y-4">
             {filteredReports.map((report) => (
-              <ReportCard key={report._id} report={report} />
+              <ReportCard key={report._id} report={report} currentUser={user} />
             ))}
           </div>
         )}

@@ -30,8 +30,12 @@ const reportSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Pending', 'Verified', 'Rejected', 'Resolved'],
+      enum: ['Pending', 'Investigating', 'Verified', 'Rejected', 'Resolved'],
       default: 'Pending',
+    },
+    policeNote: {
+      type: String,
+      default: '',
     },
     district: {
       type: String,
@@ -51,6 +55,24 @@ const reportSchema = new mongoose.Schema(
         type: [Number], // [longitude, latitude]
         required: true,
       },
+    },
+    isAnonymous: {
+      type: Boolean,
+      default: false,
+    },
+    isPoliceVerified: {
+      type: Boolean,
+      default: false,
+    },
+    assignedOfficer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    policeStatus: {
+      type: String,
+      enum: ['Open', 'Assigned', 'Solved'],
+      default: 'Open',
     },
   },
   {
