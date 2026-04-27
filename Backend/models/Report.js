@@ -1,3 +1,6 @@
+Here’s the resolved schema with the police workflow fields preserved (so no features are lost):
+
+```js
 const mongoose = require('mongoose');
 
 const reportSchema = new mongoose.Schema(
@@ -84,3 +87,4 @@ const reportSchema = new mongoose.Schema(
 reportSchema.index({ location: '2dsphere' });
 
 module.exports = mongoose.model('Report', reportSchema);
+```

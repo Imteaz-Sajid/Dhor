@@ -1,13 +1,16 @@
+Here’s the resolved version that keeps all police actions and the role-protected middleware, so no functionality is lost:
+
+```js
 const express = require('express');
 const router = express.Router();
 const { protect, isPolice } = require('../middleware/auth');
 const { updateReportStatus } = require('../controllers/policeController');
 const {
-	verifyReport,
-	markNotVerified,
-	assignCase,
-	updateCaseStatus,
-	getMyCases,
+  verifyReport,
+  markNotVerified,
+  assignCase,
+  updateCaseStatus,
+  getMyCases,
 } = require('../controllers/policeActionController');
 
 // PATCH /api/police/update-status/:reportId — police-only route to update report status
@@ -29,3 +32,4 @@ router.patch('/case-status/:reportId', protect, isPolice, updateCaseStatus);
 router.get('/my-cases', protect, isPolice, getMyCases);
 
 module.exports = router;
+```

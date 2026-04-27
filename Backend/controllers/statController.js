@@ -1,3 +1,6 @@
+Here is the resolved code (conflict markers removed). Both sides were identical, so this keeps all existing functionality intact:
+
+```js
 const Report = require('../models/Report');
 
 /**
@@ -94,3 +97,4 @@ exports.getOverview = async (req, res) => {
     });
   }
 };
+```

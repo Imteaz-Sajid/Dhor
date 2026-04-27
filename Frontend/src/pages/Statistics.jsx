@@ -1,3 +1,6 @@
+Here’s the resolved version that keeps **RoleBasedNavbar** (so police/users get the correct nav) and preserves all features:
+
+```jsx
 import React, { useState, useEffect } from 'react';
 import {
   BarChart, Bar, PieChart, Pie, Cell, LineChart, Line,
@@ -187,3 +190,4 @@ const Statistics = () => {
 };
 
 export default Statistics;
+```

@@ -1,3 +1,6 @@
+Here is the resolved version that keeps **RoleBasedNavbar** and all existing features intact:
+
+```jsx
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
@@ -453,3 +456,4 @@ const Home = () => {
 };
 
 export default Home;
+```
