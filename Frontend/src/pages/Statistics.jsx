@@ -1,9 +1,12 @@
+Here’s the resolved version that keeps **RoleBasedNavbar** (so police/users get the correct nav) and preserves all features:
+
+```jsx
 import React, { useState, useEffect } from 'react';
 import {
   BarChart, Bar, PieChart, Pie, Cell, LineChart, Line,
   XAxis, YAxis, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
-import Navbar from '../components/Navbar';
+import RoleBasedNavbar from '../components/RoleBasedNavbar';
 import ChoroplethMap from '../components/ChoroplethMap';
 import { statsAPI } from '../services/api';
 import { locationData, districts } from '../data/locations';
@@ -50,7 +53,7 @@ const Statistics = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
+      <RoleBasedNavbar />
       <div className="pt-24 pb-12 px-4 max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -187,3 +190,4 @@ const Statistics = () => {
 };
 
 export default Statistics;
+```

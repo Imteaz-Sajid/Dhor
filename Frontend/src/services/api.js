@@ -1,8 +1,11 @@
+Here is the resolved version that keeps **all features**, including the police action APIs and the working base URL on port **5001**:
+
+```js
 import axios from 'axios';
 
 // Create axios instance with base URL
 const API = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: 'http://localhost:5001/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -244,6 +247,46 @@ export const policeAPI = {
       throw error.response?.data || { message: 'Failed to update report status' };
     }
   },
+  verifyReport: async (reportId) => {
+    try {
+      const response = await API.patch(`/police/verify/${reportId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to verify report' };
+    }
+  },
+  markNotVerified: async (reportId) => {
+    try {
+      const response = await API.patch(`/police/not-verified/${reportId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to mark not verified' };
+    }
+  },
+  assignCase: async (reportId) => {
+    try {
+      const response = await API.patch(`/police/assign/${reportId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to assign case' };
+    }
+  },
+  updateCaseStatus: async (reportId, policeStatus) => {
+    try {
+      const response = await API.patch(`/police/case-status/${reportId}`, { policeStatus });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to update case status' };
+    }
+  },
+  getMyCases: async () => {
+    try {
+      const response = await API.get('/police/my-cases');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch cases' };
+    }
+  },
 };
 
 // Comment API endpoints
@@ -328,3 +371,4 @@ export const missingAPI = {
 };
 
 export default API;
+```

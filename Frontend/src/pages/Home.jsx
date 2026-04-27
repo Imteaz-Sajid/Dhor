@@ -1,3 +1,6 @@
+Here is the resolved version that keeps **RoleBasedNavbar** and all existing features intact:
+
+```jsx
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
@@ -5,7 +8,7 @@ import 'leaflet/dist/leaflet.css';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIconUrl from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-import Navbar from '../components/Navbar';
+import RoleBasedNavbar from '../components/RoleBasedNavbar';
 import CommentSection from '../components/CommentSection';
 import { reportAPI, voteAPI } from '../services/api';
 import { locationData, districts } from '../data/locations';
@@ -359,7 +362,7 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
+      <RoleBasedNavbar />
 
       <main className="pt-20 px-4 sm:px-6 lg:px-8 max-w-lg mx-auto pb-10">
         {/* Welcome card */}
@@ -453,3 +456,4 @@ const Home = () => {
 };
 
 export default Home;
+```

@@ -1,3 +1,6 @@
+Both sides are identical. Here’s the clean resolved version without conflict markers:
+
+```js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -77,3 +80,4 @@ app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV}`);
 });
+```

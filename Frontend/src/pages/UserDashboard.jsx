@@ -145,6 +145,22 @@ const UserDashboard = () => {
                       </span>
                     </div>
 
+Here’s the resolved block (kept exactly as the meaningful side, so the police assignment status stays visible):
+
+```jsx
+{(report.policeStatus === 'Assigned' || report.policeStatus === 'Solved') && (
+  <div className="mb-3 text-xs text-gray-600">
+    <span className="font-semibold">
+      {report.policeStatus === 'Assigned' ? 'Status: Police Assigned' : 'Status: Case Solved'}
+    </span>
+    {report.assignedOfficer?.name && (
+      <span className="ml-2">
+        Assigned to: Officer {report.assignedOfficer.name}
+      </span>
+    )}
+  </div>
+)}
+```
                     {/* Description */}
                     <p className="text-sm text-gray-600 leading-relaxed line-clamp-2 mb-4">
                       {report.description}

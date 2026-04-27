@@ -1,3 +1,6 @@
+Here is the resolved code with the `populate('assignedOfficer', 'name')` preserved, so the officer name keeps working in the user dashboard:
+
+```js
 const Report = require('../models/Report');
 const Vote = require('../models/Vote');
 
@@ -11,6 +14,7 @@ exports.getMyReports = async (req, res) => {
     // Fetch the user's reports, newest first
     const reports = await Report.find({ userId: req.userId })
       .sort({ createdAt: -1 })
+      .populate('assignedOfficer', 'name')
       .lean();
 
     // Get vote counts for all report IDs in a single aggregation
@@ -58,3 +62,4 @@ exports.getMyReports = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to fetch reports' });
   }
 };
+```
