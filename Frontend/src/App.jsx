@@ -1,6 +1,3 @@
-Here is the resolved version that keeps **all routes**, including the police-specific pages:
-
-```jsx
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Login from './pages/Login'
@@ -36,4 +33,3 @@ function App() {
 }
 
 export default App
-```

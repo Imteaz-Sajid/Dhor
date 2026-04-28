@@ -1,6 +1,3 @@
-Here’s the resolved version (keeps the updated `auth` export style and all features):
-
-```js
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/auth');
@@ -10,4 +7,3 @@ const { getMyReports } = require('../controllers/userDashboardController');
 router.get('/my-reports', protect, getMyReports);
 
 module.exports = router;
-```

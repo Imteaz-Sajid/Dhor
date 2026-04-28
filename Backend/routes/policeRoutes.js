@@ -1,6 +1,3 @@
-Here’s the resolved version that keeps all police actions and the role-protected middleware, so no functionality is lost:
-
-```js
 const express = require('express');
 const router = express.Router();
 const { protect, isPolice } = require('../middleware/auth');
@@ -32,4 +29,3 @@ router.patch('/case-status/:reportId', protect, isPolice, updateCaseStatus);
 router.get('/my-cases', protect, isPolice, getMyCases);
 
 module.exports = router;
-```

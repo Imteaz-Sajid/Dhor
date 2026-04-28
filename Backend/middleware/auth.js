@@ -1,6 +1,3 @@
-Here is the resolved version that preserves all features (including police role checks and role-based authorization), while keeping `protect` intact:
-
-```js
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
@@ -97,5 +94,4 @@ module.exports = {
   isPolice,
   requireRole,
 };
-```
 

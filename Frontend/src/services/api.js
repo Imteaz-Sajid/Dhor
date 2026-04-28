@@ -1,11 +1,8 @@
-Here is the resolved version that keeps **all features**, including the police action APIs and the working base URL on port **5001**:
-
-```js
 import axios from 'axios';
 
 // Create axios instance with base URL
 const API = axios.create({
-  baseURL: 'http://localhost:5001/api',
+  baseURL: 'http://localhost:5000/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -371,4 +368,3 @@ export const missingAPI = {
 };
 
 export default API;
-```

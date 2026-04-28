@@ -1,6 +1,4 @@
-Here’s the resolved version that keeps **all features**: it uses the updated `auth` export style and preserves the `assignedOfficer` population in the `/all` feed.
 
-```js
 const express = require('express');
 const Report = require('../models/Report');
 const User = require('../models/User');
@@ -108,4 +106,4 @@ router.get('/', protect, async (req, res) => {
 });
 
 module.exports = router;
-```
+

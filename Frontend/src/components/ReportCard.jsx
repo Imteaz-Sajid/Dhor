@@ -1,6 +1,4 @@
-Here’s the resolved `ReportCard` component with the Police verification badge preserved and everything else intact:
 
-```jsx
 import React, { useState, useEffect } from 'react';
 import { voteAPI } from '../services/api';
 
@@ -197,4 +195,3 @@ const ReportCard = ({ report }) => {
 };
 
 export default ReportCard;
-```
