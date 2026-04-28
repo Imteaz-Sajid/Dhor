@@ -60,6 +60,20 @@ const reportSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isPoliceVerified: {
+      type: Boolean,
+      default: false,
+    },
+    assignedOfficer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    policeStatus: {
+      type: String,
+      enum: ['Open', 'Assigned', 'Solved'],
+      default: 'Open',
+    },
   },
   {
     timestamps: true,

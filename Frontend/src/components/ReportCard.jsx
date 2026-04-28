@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { voteAPI } from '../services/api';
 
@@ -94,13 +95,20 @@ const ReportCard = ({ report }) => {
             </p>
           </div>
         </div>
-        <span
-          className={`text-xs font-medium px-2.5 py-1 rounded-full flex-shrink-0 ${
-            CRIME_BADGE[report.crimeType] || CRIME_BADGE.Other
-          }`}
-        >
-          {report.crimeType}
-        </span>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {report.isPoliceVerified && (
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">
+              Verified by Police
+            </span>
+          )}
+          <span
+            className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+              CRIME_BADGE[report.crimeType] || CRIME_BADGE.Other
+            }`}
+          >
+            {report.crimeType}
+          </span>
+        </div>
       </div>
 
       {/* Title & Description */}

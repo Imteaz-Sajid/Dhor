@@ -11,6 +11,7 @@ exports.getMyReports = async (req, res) => {
     // Fetch the user's reports, newest first
     const reports = await Report.find({ userId: req.userId })
       .sort({ createdAt: -1 })
+      .populate('assignedOfficer', 'name')
       .lean();
 
     // Get vote counts for all report IDs in a single aggregation

@@ -1,8 +1,9 @@
+
 const express = require('express');
 const Report = require('../models/Report');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
-const protect = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 const { checkSimilar } = require('../controllers/aiController');
 
 const router = express.Router();
@@ -82,6 +83,7 @@ router.get('/all', protect, async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(50)
       .populate('userId', 'name trustScore profilePicture')
+      .populate('assignedOfficer', 'name')
       .lean();
     return res.status(200).json({ success: true, reports });
   } catch (error) {
@@ -104,3 +106,4 @@ router.get('/', protect, async (req, res) => {
 });
 
 module.exports = router;
+

@@ -7,4 +7,4 @@ const { getOverview } = require('../controllers/statController');
 // @access  Public
 router.get('/overview', getOverview);
 
-module.exports = router;
+module.exports = router;

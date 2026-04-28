@@ -244,6 +244,46 @@ export const policeAPI = {
       throw error.response?.data || { message: 'Failed to update report status' };
     }
   },
+  verifyReport: async (reportId) => {
+    try {
+      const response = await API.patch(`/police/verify/${reportId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to verify report' };
+    }
+  },
+  markNotVerified: async (reportId) => {
+    try {
+      const response = await API.patch(`/police/not-verified/${reportId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to mark not verified' };
+    }
+  },
+  assignCase: async (reportId) => {
+    try {
+      const response = await API.patch(`/police/assign/${reportId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to assign case' };
+    }
+  },
+  updateCaseStatus: async (reportId, policeStatus) => {
+    try {
+      const response = await API.patch(`/police/case-status/${reportId}`, { policeStatus });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to update case status' };
+    }
+  },
+  getMyCases: async () => {
+    try {
+      const response = await API.get('/police/my-cases');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch cases' };
+    }
+  },
 };
 
 // Comment API endpoints
