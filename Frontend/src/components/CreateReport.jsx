@@ -128,12 +128,12 @@ const CreateReport = ({ onSuccess }) => {
   // ── Nearby check on description blur ───────────────────────────────
   const handleDescriptionBlur = async () => {
     const description = form.description.trim();
-    if (!description || description.length < 15 || !pin) return;
+    if (!description || description.length < 5 || !pin) return;
     setCheckingNearby(true);
     setNearbyWarning(null);
     try {
       const result = await reportAPI.checkSimilar(description, [pin.lng, pin.lat]);
-      if (result.count > 0) setNearbyWarning({ count: result.count, crimeType: result.crimeType });
+      if (result.count > 0) setNearbyWarning({ count: result.count, crimeType: result.crimeType, reports: result.reports});
     } catch {
       // non-critical
     } finally {
@@ -364,16 +364,43 @@ const CreateReport = ({ onSuccess }) => {
         </div>
 
         {/* ── Nearby Warning Banner ── */}
+        {/* ── Nearby Warning Banner ── */}
         {nearbyWarning && (
-          <div className="flex items-start gap-3 bg-amber-50 border border-amber-300 text-amber-800 px-4 py-3 rounded-lg text-sm">
-            <span className="text-lg leading-none mt-0.5">⚠️</span>
-            <p>
-              <span className="font-semibold">Alert:</span> Found{' '}
-              <span className="font-bold">{nearbyWarning.count}</span> similar{' '}
-              <span className="font-bold">{nearbyWarning.crimeType}</span> report
-              {nearbyWarning.count > 1 ? 's' : ''} within 1 km of this location. Stay alert!
-            </p>
-          </div>
+          <div className="bg-amber-50 border border-amber-300 text-amber-800 px-4 py-3 rounded-lg text-sm">
+            <div className="flex items-start gap-3 mb-3">
+              <span className="text-lg leading-none mt-0.5">⚠️</span>
+              <p>
+                <span className="font-semibold">Alert:</span> Found{' '}
+                <span className="font-bold">{nearbyWarning.count}</span> similar{' '}
+                <span className="font-bold">{nearbyWarning.crimeType}</span> report
+                 {nearbyWarning.count > 1 ? 's' : ''} within 1 km of this location. Stay alert!
+              </p>
+            </div>
+            <ul className="space-y-2 mt-2">
+              {nearbyWarning.reports.map((r) => (
+                <li key={r._id} className="bg-white border border-amber-200 rounded-lg px-3 py-2 flex items-start justify-between gap-2">
+                 <div className="flex items-start gap-2">
+                  {r.imageUrl ? (
+                    <img src={r.imageUrl} alt="evidence" className="h-12 w-12 rounded-lg object-cover border border-amber-200 flex-shrink-0" />
+                  ) : (
+                    <div className="h-12 w-12 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0 text-amber-400 text-lg">📷</div>
+                  )}
+                  <div>
+                    <p className="font-semibold text-gray-800 text-xs">{r.title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{r.crimeType} · {new Date(r.createdAt).toLocaleDateString()}</p>
+                  </div>
+                 </div>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${
+                    r.status === 'verified' ? 'bg-green-100 text-green-700' :
+                    r.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-gray-100 text-gray-600'
+                  }`}>
+                    {r.status}
+                  </span>
+                </li>
+              ))}
+           </ul>
+         </div>
         )}
 
         {/* ── Location — search + map ── */}
