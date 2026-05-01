@@ -76,9 +76,39 @@ const CreateReport = ({ onSuccess }) => {
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
+  // ── Auto-check when pin is dropped after title is typed ─────────────────
+  useEffect(() => {
+    const title = form.title.trim();
+    if (!title || title.length < 3 || !pin) return;
+    setCheckingNearby(true);
+    setNearbyWarning(null);
+    reportAPI.checkSimilar(title, [pin.lng, pin.lat])
+      .then((result) => {
+        if (result.count > 0) setNearbyWarning({ count: result.count, crimeType: result.crimeType, reports: result.reports });
+      })
+      .catch(() => {})
+      .finally(() => setCheckingNearby(false));
+  }, [pin]);
+
   // ── handlers ────────────────────────────────────────────────────────────────────
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  // ── Title change — real-time nearby check ───────────────────────────────
+  const handleTitleChange = async (e) => {
+    const title = e.target.value;
+    setForm({ ...form, title });
+    if (!title || title.length < 3 || !pin) return;
+    setCheckingNearby(true);
+    setNearbyWarning(null);
+    try {
+      const result = await reportAPI.checkSimilar(title, [pin.lng, pin.lat]);
+      if (result.count > 0) setNearbyWarning({ count: result.count, crimeType: result.crimeType, reports: result.reports });
+    } catch {
+    } finally {
+      setCheckingNearby(false);
+    }
   };
 
   const handleImageChange = (e) => {
@@ -128,7 +158,7 @@ const CreateReport = ({ onSuccess }) => {
   // ── Nearby check on description blur ───────────────────────────────
   const handleDescriptionBlur = async () => {
     const description = form.description.trim();
-    if (!description || description.length < 5 || !pin) return;
+    if (!description || description.length < 2 || !pin) return;
     setCheckingNearby(true);
     setNearbyWarning(null);
     try {
@@ -251,12 +281,21 @@ const CreateReport = ({ onSuccess }) => {
             name="title"
             type="text"
             value={form.title}
-            onChange={handleChange}
+            onChange={handleTitleChange}
             required
             maxLength={150}
             placeholder="e.g. Bag snatching near bus stand"
             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
+          {checkingNearby && (
+            <p className="text-xs text-indigo-500 mt-1 flex items-center gap-1">
+              <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+              </svg>
+              Checking nearby crime patterns…
+            </p>
+          )}
         </div>
 
         {/* ── Description ── */}
@@ -276,15 +315,6 @@ const CreateReport = ({ onSuccess }) => {
             placeholder="Describe what happened in detail…"
             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
           />
-          {checkingNearby && (
-            <p className="text-xs text-indigo-500 mt-1 flex items-center gap-1">
-              <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-              </svg>
-              Checking nearby crime patterns…
-            </p>
-          )}
         </div>
 
         {/* ── District & Thana ── */}
@@ -363,7 +393,6 @@ const CreateReport = ({ onSuccess }) => {
           </label>
         </div>
 
-        {/* ── Nearby Warning Banner ── */}
         {/* ── Nearby Warning Banner ── */}
         {nearbyWarning && (
           <div className="bg-amber-50 border border-amber-300 text-amber-800 px-4 py-3 rounded-lg text-sm">
