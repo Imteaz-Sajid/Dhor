@@ -59,7 +59,7 @@ const checkSimilar = async (req, res) => {
           },
         },
       })
-        .select('title crimeType status createdAt location imageUrl')
+        .select('title crimeType status createdAt location imageUrl description')
         .limit(20)
         .lean();
     } catch (geoErr) {

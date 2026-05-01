@@ -378,26 +378,42 @@ const CreateReport = ({ onSuccess }) => {
             </div>
             <ul className="space-y-2 mt-2">
               {nearbyWarning.reports.map((r) => (
-                <li key={r._id} className="bg-white border border-amber-200 rounded-lg px-3 py-2 flex items-start justify-between gap-2">
-                 <div className="flex items-start gap-2">
-                  {r.imageUrl ? (
-                    <img src={r.imageUrl} alt="evidence" className="h-12 w-12 rounded-lg object-cover border border-amber-200 flex-shrink-0" />
-                  ) : (
-                    <div className="h-12 w-12 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0 text-amber-400 text-lg">📷</div>
-                  )}
-                  <div>
-                    <p className="font-semibold text-gray-800 text-xs">{r.title}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{r.crimeType} · {new Date(r.createdAt).toLocaleDateString()}</p>
+               <li key={r._id} className="bg-white border border-amber-200 rounded-lg overflow-hidden">
+                <details className="group">
+                  <summary className="px-3 py-2 flex items-start justify-between gap-2 cursor-pointer hover:bg-amber-50 transition-colors list-none">
+                   <div className="flex items-start gap-2">
+                     {r.imageUrl ? (
+                       <img src={r.imageUrl} alt="evidence" className="h-12 w-12 rounded-lg object-cover border border-amber-200 flex-shrink-0" />
+                     ) : (
+                       <div className="h-12 w-12 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0 text-amber-400 text-lg">📷</div>
+                    )}
+                    <div>
+                      <p className="font-semibold text-gray-800 text-xs">{r.title}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{r.crimeType} · {new Date(r.createdAt).toLocaleDateString()}</p>
+                    </div>
+                   </div>
+                   <div className="flex items-center gap-2">
+                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${
+                       r.status === 'verified' ? 'bg-green-100 text-green-700' :
+                       r.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                       'bg-gray-100 text-gray-600'
+                    }`}>
+                      {r.status}
+                    </span>
+                    <span className="text-amber-400 text-xs group-open:rotate-180 transition-transform">▼</span>
+                   </div>
+                  </summary>
+                  <div className="px-3 pb-3 border-t border-amber-100 pt-2 space-y-1">
+                    {r.imageUrl && (
+                      <img src={r.imageUrl} alt="evidence" className="w-full h-32 object-cover rounded-lg mb-2" />
+                    )}
+                    <p className="text-xs text-gray-600"><span className="font-semibold">Crime Type:</span> {r.crimeType}</p>
+                    <p className="text-xs text-gray-600"><span className="font-semibold">Status:</span> {r.status}</p>
+                    <p className="text-xs text-gray-600"><span className="font-semibold">Date:</span> {new Date(r.createdAt).toLocaleDateString()}</p>
+                    {r.description && <p className="text-xs text-gray-600"><span className="font-semibold">Description:</span> {r.description}</p>}
                   </div>
-                 </div>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${
-                    r.status === 'verified' ? 'bg-green-100 text-green-700' :
-                    r.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-gray-100 text-gray-600'
-                  }`}>
-                    {r.status}
-                  </span>
-                </li>
+               </details>
+             </li> 
               ))}
            </ul>
          </div>
