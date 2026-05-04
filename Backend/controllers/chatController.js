@@ -1,4 +1,4 @@
-Here is the resolved code for your chat controller. I have merged both branches by keeping the extra `HTTP-Referer` and `X-Title` headers (which are recommended/required by OpenRouter for ranking and analytics) while using a stable model.
+
 
 ```javascript
 // Backend/controllers/chatController.js
