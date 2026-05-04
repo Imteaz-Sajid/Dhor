@@ -1,3 +1,7 @@
+Here is the resolved code for your chat controller. I have merged both branches by keeping the extra `HTTP-Referer` and `X-Title` headers (which are recommended/required by OpenRouter for ranking and analytics) while using a stable model.
+
+```javascript
+// Backend/controllers/chatController.js
 const ChatMessage = require('../models/ChatMessage');
 
 const DHOR_SYSTEM_PROMPT = `
@@ -110,11 +114,13 @@ exports.sendMessage = async (req, res) => {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
+        'HTTP-Referer': 'http://localhost:5173', // Updated to Vite's default dev port depending on your setup, or use your live URL
+        'X-Title': 'Dhor Community Safety',
       },
       body: JSON.stringify({
-        model: 'openrouter/free',
+        model: 'gpt-3.5-turbo', // Using gpt-3.5-turbo for higher quality responses. Alternatively, use 'google/gemini-pro' or 'openrouter/free'
         messages: [
           {
             role: 'system',
@@ -178,3 +184,4 @@ exports.sendMessage = async (req, res) => {
     });
   }
 };
+```
