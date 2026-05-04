@@ -46,6 +46,22 @@ exports.castVote = async (req, res) => {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
+    // Recalculate trust score across ALL reports by this user
+    const fullReport = await Report.findById(reportId).select('userId').lean();
+    if (fullReport?.userId) {
+      const userReports = await Report.find({ userId: fullReport.userId }).select('_id').lean();
+      const userReportIds = userReports.map((r) => r._id);
+
+      const [totalConfirms, totalDisputes] = await Promise.all([
+        Vote.countDocuments({ reportId: { $in: userReportIds }, voteType: 'Confirm' }),
+        Vote.countDocuments({ reportId: { $in: userReportIds }, voteType: 'Dispute' }),
+      ]);
+
+      // Score = total confirms across all user's reports (disputes only remove the voter's own confirm)
+      const score = Math.min(100, totalConfirms);
+      await User.findByIdAndUpdate(fullReport.userId, { trustScore: score });
+    }
+
     return res.status(200).json({ success: true, vote });
   } catch (error) {
     console.error('Cast vote error:', error);

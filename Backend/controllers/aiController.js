@@ -51,7 +51,7 @@ const checkSimilar = async (req, res) => {
     let similarReports = [];
     try {
       similarReports = await Report.find({
-        crimeType,
+        
         location: {
           $near: {
             $geometry: { type: 'Point', coordinates: [lng, lat] },
@@ -59,9 +59,10 @@ const checkSimilar = async (req, res) => {
           },
         },
       })
-        .select('title crimeType status createdAt location')
+        .select('title crimeType status createdAt location imageUrl description')
         .limit(20)
         .lean();
+        console.log('Found reports:', similarReports.length,"crimeType detected:",crimeType)
     } catch (geoErr) {
       // 2dsphere index may not exist yet or geo query failed — safe to return 0 results
       console.warn('Geospatial nearby query skipped:', geoErr.message);

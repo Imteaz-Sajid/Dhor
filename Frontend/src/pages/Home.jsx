@@ -94,10 +94,15 @@ const ReportCard = ({ report, currentUser }) => {
     // Optimistic update
     let newConfirm = confirmCount;
     let newDispute = disputeCount;
+    // Remove previous vote
     if (prevVote === 'Confirm') newConfirm -= 1;
     if (prevVote === 'Dispute') newDispute -= 1;
+    // Add new vote
     if (type === 'Confirm') newConfirm += 1;
     if (type === 'Dispute') newDispute += 1;
+    // Total votes should reflect the switch
+    newConfirm = Math.max(0, newConfirm);
+    newDispute = Math.max(0, newDispute);
 
     setConfirmCount(newConfirm);
     setDisputeCount(newDispute);
@@ -123,7 +128,11 @@ const ReportCard = ({ report, currentUser }) => {
       {/* ─── Header: avatar · name · rating · time · crime badge ─── */}
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2.5">
-          {report.userId?.profilePicture ? (
+          {report.isAnonymous ? (
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0 select-none">
+              ?
+            </div>
+          ) : report.userId?.profilePicture ? (
             <img src={report.userId.profilePicture} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
           ) : (
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-red-500 to-orange-400 flex items-center justify-center text-white text-sm font-bold flex-shrink-0 select-none">
@@ -132,7 +141,7 @@ const ReportCard = ({ report, currentUser }) => {
           )}
           <div>
             <p className="text-sm font-semibold text-gray-800 leading-tight">
-              {report.userId?.name || 'Anonymous'}
+              {report.isAnonymous ? 'Anonymous' : (report.userId?.name || 'Unknown')}
             </p>
             <div className="flex items-center gap-1 text-xs text-gray-400">
               {trustRating && (

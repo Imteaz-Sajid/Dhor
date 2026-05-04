@@ -85,6 +85,14 @@ router.get('/all', protect, async (req, res) => {
       .populate('userId', 'name trustScore profilePicture')
       .populate('assignedOfficer', 'name')
       .lean();
+
+    // Hide user identity for anonymous reports
+    reports.forEach((r) => {
+      if (r.isAnonymous) {
+        r.userId = { trustScore: r.userId?.trustScore };
+      }
+    });
+
     return res.status(200).json({ success: true, reports });
   } catch (error) {
     console.error('Fetch all reports error:', error);

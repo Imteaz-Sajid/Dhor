@@ -366,5 +366,24 @@ export const missingAPI = {
     }
   },
 };
+export const chatAPI = {
+  getMessages: async () => {
+    try {
+      const response = await API.get('/chat');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to load chat history' };
+    }
+  },
+
+  sendMessage: async (message) => {
+    try {
+      const response = await API.post('/chat', { message });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Chat failed' };
+    }
+  },
+};
 
 export default API;

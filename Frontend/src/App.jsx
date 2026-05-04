@@ -11,6 +11,7 @@ import UserDashboard from './pages/UserDashboard'
 import Directory from './pages/Directory'
 import MissingBoard from './pages/MissingBoard'
 import ReportMissing from './pages/ReportMissing'
+import Chatbox from './components/Chatbox'
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
         <Route path="/missing" element={<MissingBoard />} />
         <Route path="/report-missing" element={<ReportMissing />} />
       </Routes>
+      {!['/', '/register'].includes(window.location.pathname) && localStorage.getItem('token') && <Chatbox />}
     </Router>
   )
 }
