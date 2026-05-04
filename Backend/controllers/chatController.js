@@ -3,6 +3,7 @@ Here is the resolved code for your chat controller. I have merged both branches 
 ```javascript
 // Backend/controllers/chatController.js
 const ChatMessage = require('../models/ChatMessage');
+// ... rest of the code
 
 const DHOR_SYSTEM_PROMPT = `
 You are Dhor Assistant, the built-in chatbot for the Dhor web application.
