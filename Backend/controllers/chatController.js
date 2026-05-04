@@ -1,9 +1,4 @@
-
-
-```javascript
-// Backend/controllers/chatController.js
 const ChatMessage = require('../models/ChatMessage');
-// ... rest of the code
 
 const DHOR_SYSTEM_PROMPT = `
 You are Dhor Assistant, the built-in chatbot for the Dhor web application.
@@ -117,11 +112,11 @@ exports.sendMessage = async (req, res) => {
       headers: {
         'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'http://localhost:5173', // Updated to Vite's default dev port depending on your setup, or use your live URL
+        'HTTP-Referer': 'https://dhor-frontend.vercel.app', 
         'X-Title': 'Dhor Community Safety',
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo', // Using gpt-3.5-turbo for higher quality responses. Alternatively, use 'google/gemini-pro' or 'openrouter/free'
+        model: 'gpt-3.5-turbo',
         messages: [
           {
             role: 'system',
@@ -185,4 +180,3 @@ exports.sendMessage = async (req, res) => {
     });
   }
 };
-```
