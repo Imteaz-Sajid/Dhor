@@ -5,10 +5,12 @@ const PoliceNavbar = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    navigate('/');
-  };
+  localStorage.removeItem('user');
+  localStorage.removeItem('token');
+  localStorage.removeItem('chatMessages');
+
+  window.location.href = '/';
+};
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-40 bg-slate-900 border-b border-slate-700 shadow-lg">

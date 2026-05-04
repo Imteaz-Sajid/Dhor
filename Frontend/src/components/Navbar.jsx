@@ -5,10 +5,12 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    navigate('/');
-  };
+  localStorage.removeItem('user');
+  localStorage.removeItem('token');
+  localStorage.removeItem('chatMessages'); // add this
+
+  window.location.href = '/'; // replace navigate
+};
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-200 shadow-sm">

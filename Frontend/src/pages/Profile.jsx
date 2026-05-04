@@ -54,28 +54,37 @@ const Profile = () => {
   const [thanas, setThanas] = useState([]);
 
   // Fetch user profile on mount
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await userAPI.getProfile();
-        setUser(response.user);
-        setFormData({
-          name: response.user.name,
-          district: response.user.district,
-          thana: response.user.thana,
-        });
-        setThanas(locationData[response.user.district] || []);
-      } catch (err) {
-        console.error('Failed to load profile:', err);
-        setError(err.message || 'Failed to load profile');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchProfile = async () => {
+    try {
+      const response = await userAPI.getProfile();
+      setUser(response.user);
+      setFormData({
+        name: response.user.name,
+        district: response.user.district,
+        thana: response.user.thana,
+      });
+      setThanas(locationData[response.user.district] || []);
+    } catch (err) {
+      console.error('Failed to load profile:', err);
+      setError(err.message || 'Failed to load profile');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchProfile();
     fetchMyReports();
     fetchNotifications();
+
+    // Re-fetch profile every time the page becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchProfile();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
   const fetchMyReports = async () => {

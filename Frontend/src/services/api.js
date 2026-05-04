@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create axios instance with base URL
 const API = axios.create({
-  baseURL: 'http://localhost:5001/api',
+  baseURL: 'http://localhost:5000/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -363,6 +363,25 @@ export const missingAPI = {
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to update status' };
+    }
+  },
+};
+export const chatAPI = {
+  getMessages: async () => {
+    try {
+      const response = await API.get('/chat');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to load chat history' };
+    }
+  },
+
+  sendMessage: async (message) => {
+    try {
+      const response = await API.post('/chat', { message });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Chat failed' };
     }
   },
 };

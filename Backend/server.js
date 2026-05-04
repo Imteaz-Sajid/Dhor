@@ -18,6 +18,7 @@ const policeRoutes = require('./routes/policeRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 const stationRoutes = require('./routes/stationRoutes');
 const missingRoutes = require('./routes/missingRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 
 // Initialize Express app
 const app = express();
@@ -44,6 +45,7 @@ app.use('/api/police', policeRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/stations', stationRoutes);
 app.use('/api/missing', missingRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {
